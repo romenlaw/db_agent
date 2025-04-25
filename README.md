@@ -7,3 +7,4 @@ I will add a proper UI later.
 
 The general flow follows the generic RAG workflow:
 ![RAG overview](https://www.kdnuggets.com/wp-content/uploads/Ferrer_RAG_LlamaIndex_2.png)
+https://www.kdnuggets.com/wp-content/uploads/Ferrer_RAG_LlamaIndex_2.png
