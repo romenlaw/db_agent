@@ -1,10 +1,12 @@
 import os
+import openai
 import fitz
 import faiss
 import numpy as np
 from pathlib import Path
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 # from langchain_text_splitters import CharacterTextSplitter
+import utils
 from utils import client
 
 DEFAULT_CHUNK_SIZE = 2000
@@ -99,7 +101,7 @@ class Embedder():
                 self.embeddings = embeddings
         return
 
-    def embed_directory(self, file_directory, file_type='txt'):
+    def embed_directory(self, file_directory, file_type='txt', embed_common=True):
         """Read all files in the given path, for each file, chunk and embed it.
         At the end of it, concat all the chunks and embeddings into self.chunks and self.embeddings.
         Args:
@@ -113,7 +115,8 @@ class Embedder():
             "Invalid file type, must be txt, html or pdf"
         
         # embed the common files first
-        self._embed_directory('./input/summary')
+        if embed_common:
+            self._embed_directory('./input/summary')
         self._embed_directory(file_directory, file_type)
         
         self.indices = self.create_faiss_index(self.embeddings)
@@ -134,11 +137,15 @@ class Embedder():
 
         chunks = []
         
-        with open(txt_file_path, 'r') as f:
+        with open(txt_file_path, 'r', encoding='utf-8') as f:
             text = f.read()
         
         splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=100)
         chunks = splitter.split_text(text)
+        
+        file_name = utils.get_basename_without_extension(txt_file_path)+"\n"
+        chunks = [file_name+chunk for chunk in chunks]
+
         embeddings = self.embed_chunks(chunks=chunks)
 
         return chunks, embeddings
@@ -162,6 +169,10 @@ class Embedder():
         
         splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=100)
         chunks = splitter.split_text(text)
+        
+        file_name = utils.get_basename_without_extension(html_file_path)+"\n"
+        chunks = [file_name+chunk for chunk in chunks]
+        
         embeddings = self.embed_chunks(chunks=chunks)
 
         return chunks, embeddings
@@ -182,3 +193,5 @@ class Embedder():
         query_embedding = self.embed_chunks(queries)
         distances, indices = self.indices.search(query_embedding, k=10)  # Retrieve top k relevant chunks
         return [self.chunks[i] for i in indices[0]]
+
+
