@@ -11,12 +11,12 @@ class DbUtil():
         # Establish a connection
         try:
             self.connection = pyodbc.connect(connection_string)
-            # print("Connection successful!")
+            print("Connection successful!")
         except Exception as e:
             print(f"Error: {e}")
 
     def execute(self, query, fetch_size=100):
-        # print("***query:", query)
+        print("***query:", query)
         connection = self.connection
         cursor = connection.cursor()
 
@@ -40,6 +40,10 @@ class DbUtil():
         self.connection.close()
 
 def execute_sql(query):
+    """Execute query in DARE database
+    Args:
+        query (string): SQL query
+    """
     try:
         db = DbUtil()
         df = db.execute(query)
