@@ -7,7 +7,8 @@ The general flow follows the generic RAG workflow:
 1. clone the repo
 2. install the python dependencies. TODO: create requirement.txt with cline
 3. set up environment variables GENAI_API_KEY, GENAI_API_URL to suit your corporate envrionment
-4. to connect to databse, setup your ODBC connection to the database server
+4. fill up the cookies used by confluence in .env file
+5. to connect to databse, setup your ODBC connection to the database server
 
 # Create Memory
 Follow the steps in scheme_tester.ipynb:
