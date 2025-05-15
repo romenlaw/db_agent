@@ -4,6 +4,7 @@ import re
 from bs4 import BeautifulSoup
 import openai
 from dotenv import load_dotenv
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
@@ -56,3 +57,11 @@ def extract_sql_block(text):
 
 def unicode_escape_if_outside_utf8(s):
     return ''.join(f'\\u{ord(ch):04x}' if ord(ch) > 127 else ch for ch in s)
+
+def print_now():
+    """print the current local date, time and day of week in English
+    """
+    now = datetime.now()
+    now_string = f'today is {now.strftime("%Y-%m-%d %H:%M:%S")} {now.strftime("%A")}'
+    print(now_string)
+    return now_string
