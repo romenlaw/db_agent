@@ -1,6 +1,6 @@
 import customtkinter as ctk
 import markdown2
-from chat_bot import BotFactory
+from bot_factory import BotFactory
 import tkinter as tk
 from tkinter import ttk
 import threading
@@ -9,6 +9,9 @@ import utils
 class ChatBotGUI:
     def __init__(self):
         self.bot = BotFactory.bot()
+        
+        # Initialize history navigation index
+        self.history_index = -1
         
         # Initialize GUI window
         self.window = ctk.CTk()
@@ -88,7 +91,7 @@ class ChatBotGUI:
             values=models,
             width=250
         )
-        self.model_combo.set("gpt-4.1_v2025-04-14_GLOBAL")  # Set default model
+        self.model_combo.set(utils.CHAT_MODEL)  # Set default model
         self.model_combo.grid(row=0, column=3, padx=5)
         
         # Add temperature controls
@@ -134,6 +137,10 @@ class ChatBotGUI:
         self.input_field.bind("<Return>", self.handle_return)
         self.input_field.bind("<Shift-Return>", self.handle_shift_return)
         
+        # Bind arrow keys for history navigation
+        self.input_field.bind("<Up>", self.handle_up_arrow)
+        self.input_field.bind("<Down>", self.handle_down_arrow)
+        
         # Initialize loading indicator
         self.loading = False
         self.loading_label = ctk.CTkLabel(input_frame, text="", text_color="red")
@@ -148,6 +155,58 @@ class ChatBotGUI:
             self.send_message()
             return "break"  # Prevents default behavior
         return None  # Allows default behavior (new line) when Shift is pressed
+        
+    def get_user_questions(self):
+        """Extract user questions from bot's chat history"""
+        questions = []
+        if hasattr(self.bot, 'chat_history'):
+            for message in self.bot.chat_history:
+                if message["role"] == "user":
+                    questions.append(message["content"])
+        # Return questions in reverse order (newest first)
+        return list(reversed(questions))
+        
+    def handle_up_arrow(self, event):
+        """Handle Up arrow key press to cycle through chat history"""
+        questions = self.get_user_questions()
+        
+        # Only navigate history if we're at the start of the text or the textbox is empty
+        current_text = self.input_field.get("1.0", tk.END).strip()
+        cursor_pos = self.input_field.index(tk.INSERT)
+        line, column = map(int, cursor_pos.split('.'))
+        
+        # If we have questions in history
+        if questions:
+            # If not in history navigation mode yet, start with the first (most recent) question
+            if self.history_index == -1:
+                self.history_index = 0
+            # Otherwise move to older questions if available
+            elif self.history_index < len(questions) - 1:
+                self.history_index += 1
+            
+            # Update the input field with the selected question
+            self.input_field.delete("1.0", tk.END)
+            self.input_field.insert("1.0", questions[self.history_index])
+        
+        return "break"  # Prevents default behavior
+    
+    def handle_down_arrow(self, event):
+        """Handle Down arrow key press to cycle through chat history"""
+        questions = self.get_user_questions()
+        
+        # Only navigate if we're in history navigation mode
+        if self.history_index >= 0:
+            # Move to newer questions
+            if self.history_index > 0:
+                self.history_index -= 1
+                self.input_field.delete("1.0", tk.END)
+                self.input_field.insert("1.0", questions[self.history_index])
+            else:
+                # If we're at the most recent question, clear the input field
+                self.history_index = -1
+                self.input_field.delete("1.0", tk.END)
+        
+        return "break"  # Prevents default behavior
 
     def handle_shift_return(self, event):
         """Handle Shift+Enter key press"""
@@ -237,6 +296,9 @@ class ChatBotGUI:
         if not message:
             return
         
+        # Reset history navigation index when sending a new message
+        self.history_index = -1
+        
         # Clear input field
         self.input_field.delete("1.0", tk.END)
         
@@ -294,15 +356,19 @@ class ChatBotGUI:
         
         # Create new bot instance with same type to clear history
         current_bot = self.bot_combo.get()
-        self.bot = BotFactory.bot(current_bot)
+        # self.bot = BotFactory.bot(current_bot)
+        self.bot.new_chat()
+        
+        # Reset history navigation index
+        self.history_index = -1
         
         # Display welcome message again
-        welcome_messages = {
-            'DARE expert': "Welcome! I'm your DARE database assistant. How can I help you today?",
-            'Interchange Fee expert': "Welcome! I'm your Interchange Fee expert. How can I help you today?"
-        }
-        self.display_bot_message(welcome_messages.get(current_bot, "Welcome! How can I help you today?"))
-
+        # welcome_messages = {
+        #     'DARE expert': "Welcome! I'm your DARE database assistant. How can I help you today?",
+        #     'Interchange Fee expert': "Welcome! I'm your Interchange Fee expert. How can I help you today?"
+        # }
+        # self.display_bot_message(welcome_messages.get(current_bot, "Welcome! How can I help you today?"))
+        self.display_bot_message(BotFactory._config[current_bot]["greeting"])
     def run(self):
         """Start the GUI application"""
         self.window.mainloop()
