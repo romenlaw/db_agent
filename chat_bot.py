@@ -5,6 +5,7 @@ import utils
 import db_utils
 # from db_utils import DbUtil
 from embedder import Embedder
+import recommend
 
 
 MEMORY_PATH = './memory/dare'
@@ -57,6 +58,72 @@ tools = [
                     }
                 },
                 "required": ["query"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "recommend_product",
+            "description": "Recommend merchant products based on input criteria",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "cp_cnp": {
+                        "type": "string",
+                        "description": "Whether the product should be CP / Card Present or CNP / Card Not Present / eCommerce"
+                    },
+                    "mis_division": {
+                        "type": "string",
+                        "description": "Which market division the customer belongs. Valid values are RBS, BB, IB&M"
+                    },
+                    "mcc": {
+                        "type": "integer",
+                        "description": "MCC / Merchant Category Code."
+                    },
+                    "postcode": {
+                        "type": "integer",
+                        "description": "Postcode of trading address, must be valid Australian postcode."
+                    },
+                    "revenue": {
+                        "type": "number",
+                        "description": "Monthly net revenue of the merchant."
+                    }
+                },
+                "required": ["cp_cnp", "mis_division", "mcc", "postcode", "revenue"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "recommend_pricing",
+            "description": "Recommend merchant pricing plan",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_code": {
+                        "type": "string",
+                        "description": "Merchant product code"
+                    },
+                    "mis_division": {
+                        "type": "string",
+                        "description": "Which market division the customer belongs. Valid values are RBS, BB, IB&M"
+                    },
+                    "mcc": {
+                        "type": "integer",
+                        "description": "MCC / Merchant Category Code."
+                    },
+                    "postcode": {
+                        "type": "integer",
+                        "description": "Postcode of trading address, must be valid Australian postcode."
+                    },
+                    "revenue": {
+                        "type": "number",
+                        "description": "Monthly net revenue of the merchant."
+                    }
+                },
+                "required": ["product_code", "mis_division", "mcc", "postcode", "revenue"]
             }
         }
     }
@@ -179,6 +246,7 @@ class Chat_Bot():
         # print("process_tool_call:", tool_call)
         function_name = tool_call.function.name
         arguments = json.loads(tool_call.function.arguments)
+        # print(f"function name: {function_name}, arguments: {arguments}")
         
         # Call the appropriate function
         if function_name == "execute_sql":
@@ -188,6 +256,22 @@ class Chat_Bot():
         elif function_name == "get_current_date_time":
             result = utils.print_now()
             return result
+        elif function_name == "recommend_product":
+            result = recommend.recommend_product(arguments["cp_cnp"],
+                                                 arguments["mis_division"], 
+                                                 arguments["mcc"], 
+                                                 arguments["postcode"], 
+                                                 arguments["revenue"] )
+            print("recommended product: ", result)
+            return f"recommended products (from high to low priority): {result}"
+        elif function_name == "recommend_pricing":
+            result = recommend.recommend_pricing(arguments["product_code"], 
+                                                 arguments["mis_division"], 
+                                                 arguments["mcc"], 
+                                                 arguments["postcode"], 
+                                                 arguments["revenue"])
+            print("recommended pricing: ", result)
+            return f"recommended pricing plan: {result}"
         return None
 
 
