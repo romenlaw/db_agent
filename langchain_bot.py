@@ -7,6 +7,7 @@ from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from itertools import islice
 from chat_bot import Chat_Bot
+import recommend
 import chat_bot
 import utils
 import db_utils
@@ -70,7 +71,9 @@ class LangChainBot(Chat_Bot):
                 name="execute_sql",
                 func=lambda query: json.dumps(db_utils.execute_sql(query)),
                 description="Execute SQL query on the database and return results. The query parameter should be a valid SQL query string."
-            )
+            ),
+            recommend.recommend_product_wrapper,
+            recommend.recommend_pricing_wrapper
         ]
 
         # Create prompt template
@@ -171,53 +174,6 @@ class LangChainBot(Chat_Bot):
         # print("result keys=", *result.keys(), sep=",")
         return result["output"]
         
-        # Check if tool calls are present
-    #     if hasattr(result, "additional_kwargs") and "tool_calls" in result.additional_kwargs:
-    #         tool_calls = result.additional_kwargs["tool_calls"]
-            
-    #         # Process each tool call
-    #         for tool_call in tool_calls:
-    #             # Execute tool
-    #             tool_result = self._execute_tool(tool_call)
-                
-    #             # Add tool call and result to messages
-    #             messages.extend([
-    #                 {
-    #                     "role": "assistant",
-    #                     "content": str(tool_result),
-    #                     "tool_calls": [{
-    #                         "id": tool_call.id,
-    #                         "type": "function",
-    #                         "function": {
-    #                             "name": tool_call.function.name,
-    #                             "arguments": tool_call.function.arguments
-    #                         }
-    #                     }]
-    #                 },
-    #                 {
-    #                     "role": "tool",
-    #                     "tool_call_id": tool_call.id,
-    #                     "content": str(tool_result)
-    #                 }
-    #             ])
-                
-    #             # Recursive call with updated messages
-    #             return self._run_agent_with_tools(messages)
-        
-    #     print("breaking out of recursion")
-    #     return result["output"]
-    
-    # def _execute_tool(self, tool_call):
-    #     """Execute a tool call and return the result"""
-    #     tool_name = tool_call.function.name
-    #     arguments = json.loads(tool_call.function.arguments)
-        
-    #     # Find the matching tool
-    #     for tool in self.tools:
-    #         if tool.name == tool_name:
-    #             return tool.func(arguments.get("query"))
-        
-    #     return f"Tool {tool_name} not found"
 
 if __name__ == "__main__":
     print('Initializing LangChain bot, please wait...')
