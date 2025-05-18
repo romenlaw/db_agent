@@ -2,6 +2,8 @@
 db_agent is a RAG agent that has knowledge about database data dictionary. This knowledge can be used to generate SQL queries and execute them in the database.
 The general flow follows the generic RAG workflow:
 ![RAG overview](https://www.kdnuggets.com/wp-content/uploads/Ferrer_RAG_LlamaIndex_2.png)
+The general flow of Agentic RAG workflow:
+![Agentic RAG overview](https://miro.medium.com/v2/resize:fit:720/format:webp/0*G9i0tIlbZzvs7wAZ.png)
 
 # Installation
 1. clone the repo
